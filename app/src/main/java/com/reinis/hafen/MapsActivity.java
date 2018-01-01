@@ -1,5 +1,6 @@
 package com.reinis.hafen;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -10,12 +11,30 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private Model model;
+    private DatabaseHelper dbHelper = new DatabaseHelper(this);
+    private DatabaseTranslator dbTranslator;
+    private SQLiteDatabase database;
+
+    //todo create circles
+    //todo create Model
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        // Handling the Database
+
+        dbTranslator=new DatabaseTranslator(dbHelper);
+
+        //populate the model
+        model= new Model(dbTranslator.getSounds(),CircleList);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
