@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">Hafen</string>
     <string name="title_activity_maps">Map</string>
+
+    <string name="drawer_open">Panel zu</string>
+    <string name="drawer_close">Panel aus</string>
+    <string name="author">Erzähler: %1$s </string>
+    <string name="list">Audio Liste</string>
+    <string name="action_settings">Einstellungen</string>
 </resources>

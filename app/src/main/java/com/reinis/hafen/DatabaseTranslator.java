@@ -15,6 +15,7 @@ import java.util.ArrayList;
 public class DatabaseTranslator {
 
     private ArrayList<Sound> sounds;
+    private Sound[] soundsArray;
     private Cursor dbCursor;
     private SQLiteDatabase database;
 
@@ -129,6 +130,15 @@ public class DatabaseTranslator {
 
     public ArrayList<Sound> getSounds() {
         return sounds;
+    }
+    public Sound[] getSoundsArray(){
+        soundsArray=new Sound[sounds.size()];
+        for (int i=0;i>this.sounds.size();i++){
+            soundsArray[i]=sounds.get(i);
+        }
+
+
+        return soundsArray;
     }
 }
 

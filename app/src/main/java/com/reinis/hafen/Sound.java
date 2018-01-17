@@ -45,7 +45,7 @@ class Sound implements Serializable {
      */
 
 
-    Sound(int ID_sound, double x_value, double y_value, double radius, String name, String author, String description, int repeat, String file_path, int color, int visibility, int controls, double speed, double approach_dir, String[][] AND_OR, String[] NOT)
+    Sound(int ID_sound, double x_value, double y_value, double radius, String name, String author, String description, int repeat, String file_path, String color, int visibility, int controls, double speed, double approach_dir, String[][] AND_OR, String[] NOT)
     {
         this.ID_sound=ID_sound;
         this.x_value=x_value;
@@ -57,7 +57,7 @@ class Sound implements Serializable {
         this.repeat=repeat;
         this.file_path=file_path;
         this.playing=false;
-        this.color=color;
+        this.color = Color.parseColor(color) ;
         this.visibility=visibility;
         this.controls=controls;
         this.speed=speed;

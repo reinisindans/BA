@@ -20,10 +20,12 @@ import java.io.OutputStream;
 
 class DatabaseHelper extends SQLiteOpenHelper {
     private static String DB_PATH;
+    //todo change Database Name?
     private static String DB_NAME = "sound.db";
     private SQLiteDatabase myDataBase;
     private final Context myContext;
     DatabaseHelper(Context context) {
+
         super(context, DB_NAME, null, 1);
         this.myContext = context;
     }
