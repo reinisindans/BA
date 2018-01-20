@@ -46,7 +46,8 @@ public class DatabaseTranslator {
             int visibility_index= dbCursor.getColumnIndex("Visibility");
             int color_index= dbCursor.getColumnIndex("Color");
             int control_index=dbCursor.getColumnIndex("Controls");
-            int speed_index=dbCursor.getColumnIndex("Speed");
+            int min_speed_index=dbCursor.getColumnIndex("min_speed");
+            int max_speed_index=dbCursor.getColumnIndex("max_speed");
             int approach_dir_index=dbCursor.getColumnIndex("Approach_dir");
             int AND_OR_index=dbCursor.getColumnIndex("AND_OR");
             int NOT_index=dbCursor.getColumnIndex("NOT");
@@ -76,10 +77,27 @@ public class DatabaseTranslator {
                 int color=Color.parseColor(dbCursor.getString(color_index));
                 Log.d("Reading Cursor", "controls");
                 int control=Integer.parseInt(dbCursor.getString(control_index));
-                Log.d("Reading Cursor", "speed");
-                double speed=Double.parseDouble(dbCursor.getString(speed_index));
+                Log.d("Reading Cursor", "min_speed");
+                double min_speed=Double.parseDouble(dbCursor.getString(min_speed_index));
+                Log.d("Reading Cursor", "max_speed");
+                double max_speed=Double.parseDouble(dbCursor.getString(max_speed_index));
+
                 Log.d("Reading Cursor", "approach direction");
-                double approach_dir=Double.parseDouble(dbCursor.getString(approach_dir_index));
+                String[] approach_first_order=dbCursor.getString(approach_dir_index).split(";");
+                String[][] approach_second_order=new String[approach_first_order.length][2];
+                for (int i = 0; i < approach_first_order.length; i++) {
+                    String[] directions_array=approach_first_order[i].split(",");
+                    Log.d("Reading Cursor", "AND/OR, adding an AND array");
+                    approach_second_order[i]=directions_array;
+                }
+
+                double[][] approach_dir=new double[approach_second_order.length][2];
+                for (int i=0;i<approach_second_order.length;i++){
+                    for (int k=0; k<approach_second_order[i].length;k++){
+                        approach_dir[i][k]=Double.parseDouble(approach_second_order[i][k]);
+                    }
+
+                }
 
                 Log.d("Reading Cursor", "AND/OR");
                 String[] array_or= dbCursor.getString(AND_OR_index).split(";");
@@ -108,7 +126,7 @@ public class DatabaseTranslator {
                 Create the Sound instance!
                  */
 
-                Sound sound = new Sound( id, x_value, y_value, radius, name, author, description, repeat, file_path, color, visibility, control, speed, approach_dir, AND_OR, NOT);
+                Sound sound = new Sound( id, x_value, y_value, radius, name, author, description, repeat, file_path, color, visibility, control, min_speed, max_speed, approach_dir, AND_OR, NOT);
 
                 /*
                 Add to the List af all sounds in the Database!!
@@ -131,6 +149,8 @@ public class DatabaseTranslator {
     public ArrayList<Sound> getSounds() {
         return sounds;
     }
+
+
     public Sound[] getSoundsArray(){
         soundsArray=new Sound[sounds.size()];
         for (int i=0;i>this.sounds.size();i++){

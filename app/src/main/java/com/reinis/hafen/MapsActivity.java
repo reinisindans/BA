@@ -93,6 +93,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     final String[] LOCATION_PERMS = {Manifest.permission.ACCESS_FINE_LOCATION};
     final int LOCATION_REQUEST = 1340;
 
+    // Controller with main methods!
+    Controller controller=new Controller();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -335,6 +338,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -370,7 +374,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 new int[]{android.R.attr.actionBarSize});
         mActionBarSize = (int) styledAttributes.getDimension(0, 0);
         styledAttributes.recycle();
-
 
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
         mMap.setPadding(0, 0, 0, mActionBarSize);
@@ -417,6 +420,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
+
+
+        if (model.getLocation()!=null) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(model.getLocation(), 16));
+
+        }
+
         /**
          * Setting up the location manager. It is responsible for getting the user position!
          */
@@ -425,7 +435,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
         /**
-         * This creates a
+         * This creates a seekerbar and starts updating it, if a view is focused...
          */
         MapsActivity.this.runOnUiThread(new Runnable() {
 
@@ -462,15 +472,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mHandler.postDelayed(this, 500);
             }
         });
-        if (model.getLocation()!=null) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(model.getLocation(), 16));
 
-        }
     }
 
 
     //todo Decide if and how the sound should be played/paused. Display/hide the playback controls: play_sound()
 
+    // todo Method to show/hide/rewind the seekbar!
     /**
      * Methods to control and adjust the Seeker bar- replay progress bar
      *
@@ -573,7 +581,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 Log.d("Position changed", "******************************************************");
                 model.setLocation(new LatLng(loc.getLatitude(), loc.getLongitude()));
-
+                model.setSpeed(loc.getSpeed());
 
 
             }
@@ -641,6 +649,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 TextView view = model.getSoundsInDistance().get(i);
                 view.setGravity(Gravity.CENTER);
+                final String name= model.getSounds()[i].getName();
+                final String author= model.getSounds()[i].getAuthor();
+                final String description= model.getSounds()[i].getDescription();
+
+
+                view.setOnClickListener(new View.OnClickListener(){
+
+                    @Override
+                    public void onClick(View view) {
+                        showInfo(name,author,description);
+                    }
+                });
 
                 sounds_in_radius.addView(view);
                 Log.d("Adding View",""+view.getText());
@@ -659,12 +679,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mediaControls.setVisibility(View.GONE);
             Log.d("Control visibility"," GONE");
         }
-    }
-
-    private void vibrate(){
-        long[] pattern=new long[]{0,250,100,250,500,250,100,250};
-        v.vibrate(pattern,-1);
-
     }
 
 
@@ -792,4 +806,41 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         fake_layout.addView(close, layout_button);
 
     }
+
+    //todo implement load players class
+
+    private void loadPlayers(boolean[] load){
+
+        for (int i=0; i<load.length ;i++){
+            // if should be loaded, and player IS loaded - do nothing
+            if (load[i] && (model.getMedia_player(i) != null)){
+            }
+            // if should NOT be loaded, and player is NOT loaded - do nothing
+            else if (!load[i] && (model.getMedia_player(i) == null)){
+            }
+            // if should be loaded, but player is NOT loaded!  - load player, set loaded indicator
+            else if (load[i] && (model.getMedia_player(i) == null)) {
+                Log.d("Creating Media Players", "Preparing to load "+ model.getSounds()[i].getName());
+                // run async Media player prepare!
+                String path = model.getSounds()[i].getFile_path();
+                Log.d("Creating Media Players", "path recovered: "+model.getSounds()[i].getFile_path());
+                MediaPlayer player = MediaPlayer.create(this, getResources().getIdentifier(path,
+                        "raw", getPackageName()));
+                Log.d("Creating Media Players", "Media player No. " + i + " SET");
+                model.setMedia_player(i,player);
+                model.getSounds()[i].setLoaded(true);
+            }
+            // if should NOT be loaded, but player IS loaded!  - unload player, set loaded indicator
+            else if (!load[i] && (model.getMedia_player(i)!=null )) {
+                model.getMedia_player(i).release();
+                model.setMedia_player(i,null);
+                model.getSounds()[i].setLoaded(false);
+
+                Log.d("Creating Media Players", "Media player No. " + i + " REMOVED");
+            }
+
+        }
+
+    }
+
 }

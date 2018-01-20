@@ -7,6 +7,7 @@ package com.reinis.hafen;
 //todo SOUND DONE
 
 import android.graphics.Color;
+import android.util.Log;
 
 import java.io.Serializable;
 
@@ -30,22 +31,31 @@ class Sound implements Serializable {
     private boolean focused;
     private int view_ID;
     private int color;
-    private int visibility;
-    private int controls;
-    private double speed;
-    private double approach_dir;
-    private String[][] AND_OR;
-    private String[] NOT;
+    private boolean visibility;
+    private boolean controls;
+    private double min_speed;
+    private double max_speed;
+    private double[][] approach_dir;
+    private double user_direction;
+    private Integer[][] AND_OR;
+    private Integer[] NOT;
+    private String[][] AND_OR_string;
+    private String[] NOT_string;
     private int repeat;
+    private Integer times_played;
+    private boolean is_visible;
+    private boolean check_AND_OR;
+    private boolean check_NOT;
+    private double volume;
 
-
+//todo export all the boolean values except visibility,controls, to Model boolean[] checks.
 
 /*
     Declare Constructors
      */
 
 
-    Sound(int ID_sound, double x_value, double y_value, double radius, String name, String author, String description, int repeat, String file_path, String color, int visibility, int controls, double speed, double approach_dir, String[][] AND_OR, String[] NOT)
+    Sound(int ID_sound, double x_value, double y_value, double radius, String name, String author, String description, int repeat, String file_path, int color, int visibility, int controls, double min_speed,double max_speed, double[][] approach_dir, String[][] AND_OR, String[] NOT)
     {
         this.ID_sound=ID_sound;
         this.x_value=x_value;
@@ -57,14 +67,14 @@ class Sound implements Serializable {
         this.repeat=repeat;
         this.file_path=file_path;
         this.playing=false;
-        this.color = Color.parseColor(color) ;
-        this.visibility=visibility;
-        this.controls=controls;
-        this.speed=speed;
+        this.color = color ;
+        initiateVisibility(visibility);
+        initiateControls(controls);
+        this.min_speed=min_speed;
+        this.max_speed=max_speed;
         this.approach_dir=approach_dir;
-        this.AND_OR=AND_OR;
-        this.NOT=NOT;
-
+        this.AND_OR_string=AND_OR;
+        this.NOT_string=NOT;
 
     }
 
@@ -194,51 +204,51 @@ class Sound implements Serializable {
         this.color = color;
     }
 
-    public int getVisibility() {
+    public boolean getVisibility() {
         return visibility;
     }
 
-    public void setVisibility(int visibility) {
+    public void setVisibility(boolean visibility) {
         this.visibility = visibility;
     }
 
-    public int getControls() {
+    public boolean getControls() {
         return controls;
     }
 
-    public void setControls(int controls) {
+    public void setControls(boolean controls) {
         this.controls = controls;
     }
 
-    public double getSpeed() {
-        return speed;
+    public double getMin_speed() {
+        return min_speed;
     }
 
-    public void setSpeed(double speed) {
-        this.speed = speed;
+    public double getMax_speed() {
+        return max_speed;
     }
 
-    public double getApproach_dir() {
+    public double[][] getApproach_dir() {
         return approach_dir;
     }
 
-    public void setApproach_dir(double approach_dir) {
+    public void setApproach_dir(double[][] approach_dir) {
         this.approach_dir = approach_dir;
     }
 
-    public String[][] getAND_OR() {
+    public Integer[][] getAND_OR() {
         return AND_OR;
     }
 
-    public void setAND_OR(String[][] AND_OR) {
+    public void setAND_OR(Integer[][] AND_OR) {
         this.AND_OR = AND_OR;
     }
 
-    public String[] getNOT() {
+    public Integer[] getNOT() {
         return NOT;
     }
 
-    public void setNOT(String[] NOT) {
+    public void setNOT(Integer[] NOT) {
         this.NOT = NOT;
     }
 
@@ -250,4 +260,109 @@ class Sound implements Serializable {
         this.repeat = repeat;
     }
 
+    public boolean isPlaying() {
+        return playing;
+    }
+
+    public boolean isIn_distance() {
+        return in_distance;
+    }
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public boolean isFocused() {
+        return focused;
+    }
+
+    public Integer getTimes_played() {
+        return times_played;
+    }
+
+
+    public String[][] getAND_OR_string() {
+        return AND_OR_string;
+    }
+
+    public String[] getNOT_string() {
+        return NOT_string;
+    }
+
+    public void setTimes_played(Integer times_played) {
+        this.times_played = times_played;
+    }
+
+    public boolean getIs_visible() {
+        return is_visible;
+    }
+
+    public void setIs_visible(boolean is_visible) {
+        this.is_visible = is_visible;
+    }
+    public boolean get_played(){
+        boolean played=false;
+        if (times_played!=null){
+            played=true;
+        }
+        return  played;
+    }
+
+    private void initiateVisibility(int vis){
+        Log.d("initiating visibility; ", "start: " +this.getName());
+        boolean visibility;
+        if (vis!=1){
+            this.visibility=false;
+            Log.d(" visibility: ", "FALSE ");
+        }
+        else {
+            this.visibility=true;
+            Log.d(" visibility: ", "TRUE ");
+        }
+    }
+
+    private void initiateControls(int contr){
+        Log.d("initiating controls; ", "start: " +this.getName());
+        boolean visibility;
+        if (contr!=1){
+            this.visibility=false;
+            Log.d(" controls: ", "FALSE ");
+        }
+        else {
+            this.visibility=true;
+            Log.d(" controls: ", "TRUE ");
+        }
+    }
+
+    public boolean getCheck_AND_OR() {
+        return check_AND_OR;
+    }
+
+    public void setCheck_AND_OR(boolean check_AND_OR) {
+        this.check_AND_OR = check_AND_OR;
+    }
+
+    public boolean getCheck_NOT() {
+        return check_NOT;
+    }
+
+    public void setCheck_NOT(boolean check_NOT) {
+        this.check_NOT = check_NOT;
+    }
+
+    public double getVolume() {
+        return volume;
+    }
+
+    public void setVolume(double volume) {
+        this.volume = volume;
+    }
+
+    public double getUser_direction() {
+        return user_direction;
+    }
+
+    public void setUser_direction(double user_direction) {
+        this.user_direction = user_direction;
+    }
 }
