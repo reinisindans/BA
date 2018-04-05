@@ -64,7 +64,7 @@ class Sound implements Serializable {
     private Integer times_played;
     private boolean playing;
     private boolean in_distance;
-    private double volume; // maybe not needed
+    private float volume; // maybe not needed
     private Location location;
     private boolean loaded;
     private boolean focused;
@@ -74,13 +74,15 @@ class Sound implements Serializable {
     private MediaPlayer media_player;
     private CircleOptions circleOptions;
     private boolean view_in_distance;
-    private boolean visible;
+
 
 
     //CHECKS!
     private boolean check_AND_OR;
     private boolean check_NOT;
     private boolean checkDelay;
+    private boolean check_turn;
+    private boolean check_speed;
 
 
 //todo export all the boolean values except visibility,controls, to Model boolean[] checks.
@@ -105,7 +107,7 @@ class Sound implements Serializable {
         this.playing=false;
         this.color = color ;
         this.visibility=visibility;
-        this.visible=false;
+        this.is_visible=false;
         this.controls=controls;
         this.min_speed=min_speed;
         this.max_speed=max_speed;
@@ -354,15 +356,6 @@ class Sound implements Serializable {
         return view;
     }
 
-    public boolean get_played(){
-        boolean played=false;
-        if (times_played!=null){
-            played=true;
-        }
-        return  played;
-    }
-
-
     public boolean getCheck_AND_OR() {
         return check_AND_OR;
     }
@@ -383,8 +376,12 @@ class Sound implements Serializable {
         return volume;
     }
 
-    public void setVolume(double volume) {
-        this.volume = volume;
+    public boolean isTurn() {
+        return check_turn;
+    }
+
+    public void setTurn(boolean turn) {
+        this.check_turn = turn;
     }
 
     public double getUser_direction() {
@@ -405,6 +402,16 @@ class Sound implements Serializable {
     public void setLocation(Location location) {
         this.location = location;
     }
+
+
+    public boolean get_played(){
+        boolean played=false;
+        if (times_played!=null){
+            played=true;
+        }
+        return  played;
+    }
+
 
     public void checkDelay(){
 
@@ -511,7 +518,9 @@ class Sound implements Serializable {
         Log.d("Adjusting volumes", ": ");
             if (in_distance){
                 double vol_mod = Math.pow(((radius-user_distance) / radius), 1 / vol_mod_ind);
-                volume=1 - (Math.log(100 - (vol_mod_ind * 100)) / Math.log(100));
+                volume=(float)(1 - (Math.log(100 - (vol_mod_ind * 100)) / Math.log(100)));
+                // todo! set ap biaural volume controls!!!!!!
+                media_player.setVolume(volume, volume);
                 }
             else {
             }
@@ -541,10 +550,27 @@ class Sound implements Serializable {
                 }
     }
 
+    public void check_speed(double user_speed){
+        Log.d("Checking speeds", "check_speed: ");
+
+            if (max_speed>user_speed && user_speed>=min_speed){
+                check_speed=true;
+            }
+            else{
+                check_speed=false;
+            }
+    }
 
     private void vibrate(Vibrator v){
         long[] pattern=new long[]{0,250,100,250,500,250,100,250};
         v.vibrate(pattern,-1);
+    }
+
+
+    public boolean[] check_time(Sound[] sounds){
+        boolean[] time_check=new boolean[sounds.length];
+        // todo Check for playing time in future versions!!!
+        return time_check;
     }
 
 }

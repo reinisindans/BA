@@ -21,16 +21,19 @@ import java.util.ArrayList;
  */
 public class Model {
 
+    final private double player_load_radius=200;
+    final private String TAG= "model";
 
     private Sound[] sounds;
-    private MediaPlayer[] media_players;
     private ArrayList<Circle> circleList;
     private User user;
     private int playing_with_controls=-1;
     private ArrayList<TextView> soundsInDistance;
+
+
+    //CHECKS
     private boolean[][] checks;
-    final private double player_load_radius=200;
-    private String TAG= "model";
+    private boolean[] check_turn;
 
 
 
@@ -62,10 +65,10 @@ public class Model {
 
 
         }
-
-        translateAND_OR(this.sounds);
-        translateNOT(this.sounds);
+        translateAND_OR();
+        translateNOT();
         circleList= new ArrayList<>();
+        check_turn=new boolean[sounds.length];
     }
 
 
@@ -73,58 +76,23 @@ public class Model {
         return sounds;
     }
 
-    public void setSounds(Sound[] sounds) {
-        this.sounds = sounds;
-    }
-
-
-    public MediaPlayer[] getMedia_players() {
-        return media_players;
-    }
-
-    public MediaPlayer getMedia_player(int index) {
-        return media_players[index];
-    }
-
-    public void setMedia_players(MediaPlayer[] media_players) {
-        this.media_players = media_players;
-    }
-
-    public void setMedia_player(int index, MediaPlayer player) {
-        this.media_players[index] = player;
-    }
-
-
-
     public ArrayList<TextView> getSoundsInDistance() {
         return soundsInDistance;
     }
 
-    public void setSoundsInDistance(ArrayList<TextView> soundsInDistance) {
-        this.soundsInDistance = soundsInDistance;
+    public User getUser() {
+        return user;
     }
 
-    public void addToSoundInDistance(TextView soundInDistance) {
-        this.soundsInDistance.add(soundInDistance);
+    public ArrayList<Circle> getCircleList() {
+        return circleList;
     }
 
-    private ArrayList<Integer> get_played() {
-        ArrayList<Integer> played = new ArrayList<>();
-
-        for (int i = 0; i < sounds.length; i++) {
-            if (sounds[i].getTimes_played() > 0) {
-                played.add(i);
-            }
-        }
-        return played;
+    public int getPlaying_with_controls() {
+        return playing_with_controls;
     }
 
-    /**
-     * This method turns the Array of Names to be used in SQL conditionals into corressponding sound indexes
-     *
-     * @param sounds
-     */
-    private void translateNOT(Sound[] sounds) {
+    private void translateNOT() {
 
         for (int i = 0; i < sounds.length; i++) {
             if (sounds[i].getNOT_string() == null) {
@@ -144,8 +112,7 @@ public class Model {
         }
     }
 
-
-    private void translateAND_OR(Sound[] sounds) {
+    private void translateAND_OR() {
         for (int i = 0; i < sounds.length; i++) {
             //if null
             Log.d("Translating AND_OR", "translateAND_OR: start,  " + sounds[i].getName());
@@ -173,67 +140,44 @@ public class Model {
         }
     }
 
-    private boolean check_NOT(Integer[] NOT, Sound[] sounds) {
-        Log.d("", "check_NOT: ");
-        boolean check = false;
-        for (int i = 0; i < NOT.length; i++) {
-            check = sounds[NOT[i]].get_played();
+    // Checking the NOT arrays against sounds already played
+    private void check_NOT() {
+        Log.d(TAG, "check_NOT: starting");
+        for (Sound s : sounds) {
+            for (int i = 0; i < s.getNOT().length; i++) {
+                boolean played=sounds[s.getNOT()[i]].get_played();
+                if (played==true){
+                    s.setCheck_NOT(false);
+                    Log.d(TAG, "check_NOT: forbidden element played! checkNot set to False!");
+                    break;
+                }
+            }
+
         }
-        return check;
     }
 
-    private boolean check_AND_OR(Integer[][] AND_OR, Sound[] sounds) {
-        Log.d("", "check_AND_OR: ");
+    private void check_AND_OR() {
+        Log.d(TAG, "check_AND_OR: Starting");
         boolean check = true;
-        boolean[] rows = new boolean[AND_OR.length];
-        for (int i = 0; i < AND_OR.length; i++) {
-            boolean[] items = new boolean[AND_OR[i].length];
-            for (int k = 0; k < AND_OR[i].length; k++) {
-                items[i] = sounds[AND_OR[i][k]].get_played();
+        for (Sound s : sounds) {
+            Log.d(TAG, "check_AND_OR: "+s.getName());
+            boolean[] rows = new boolean[s.getAND_OR().length];
+            for (int i = 0; i < s.getAND_OR().length; i++) {
+                boolean[] items = new boolean[s.getAND_OR()[i].length];
+                for (int k = 0; k < s.getAND_OR()[i].length; k++) {
+                    items[i] = sounds[s.getAND_OR()[i][k]].get_played();
+                }
+                rows[i] = true;
+                for (boolean item : items) {
+                    rows[i] = item && rows[i];
+                }
             }
-            rows[i] = true;
-            for (boolean item : items) {
-                rows[i] = item && rows[i];
+            for (boolean r : rows) {
+                check = r && check;
+                Log.d(TAG, "check_AND_OR: iterate rows: "+s.getName()+", "+check);
             }
+            s.setCheck_AND_OR(check);
         }
-        for (boolean r : rows) {
-            check = r && check;
-        }
-
-        return check;
-    }
-
-    public void set_AND_OR_NOT_checks() {
-
-    for (int i = 0;i<sounds.length;i++){
-        sounds[i].setCheck_AND_OR(check_AND_OR(sounds[i].getAND_OR(),sounds));
-        sounds[i].setCheck_NOT(check_NOT(sounds[i].getNOT(),sounds));
-      }
-    }
-
-    /*public void setSpeed(double speed) {
-        this.speed = speed;
-    }
-    */
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public ArrayList<Circle> getCircleList() {
-        return circleList;
-    }
-
-    public void setCircleList(ArrayList<Circle> circleList) {
-        this.circleList = circleList;
-    }
-
-    public int getPlaying_with_controls() {
-        return playing_with_controls;
     }
 
     // todo put in MODEL
@@ -278,7 +222,7 @@ public class Model {
             }
         }
     }
-    // todo put in MODEL
+
     private double[] get_closest_distance() {
 
         // array= {distance,ID}
@@ -344,27 +288,56 @@ public class Model {
         }
     }
 
-    // check if the sound circle should be visible!!!!!!!!
-    // todo put in MODEL!
-    private boolean[] check_visibility(Sound[] sounds, boolean[] turn_precondition_values){
-        Log.d("check_visibility()", "Starting: ");
-        boolean[] visibility_check=new boolean[sounds.length];
 
-        for(int i=0;i<sounds.length;i++){
+    // check if the sound circle should be visible!!!!!!!!
+    private void check_visibility(){
+        Log.d("check_visibility()", "Starting: ");
+
+        for(Sound s:sounds){
             // NO visibility by default!
-            if (!sounds[i].getVisibility()){
-                visibility_check[i]=false;
+            if (!s.getVisibility()){
+                s.setIs_visible(false);
+                Log.d("check_visibility()", "no Visibility ");
             }
             // should be visible if the preconditions about previously played tracks are met
             else {
-                visibility_check[i]= turn_precondition_values[i];
+                s.setIs_visible(s.isTurn());
+                Log.d("check_visibility()", "depends on check_turn()");
             }
 
         }
-
-        return visibility_check;
     }
 
 
+    // Check if it is the play-turn for the sounds
+    public void check_turn(){
+        Log.d(TAG, "check_play_turn_preconditions: ");
+
+        for(Sound s:sounds){
+
+                // There are items in NOT array and at least one of them has been played!
+                if(s.getNOT()!=null && s.getCheck_NOT()) {
+                    s.setTurn(false);
+                }
+                // There are items in NOT array, none have been played // OR No sounds NOT
+                else if ((s.getNOT()!=null && !s.getCheck_NOT()) || s.getNOT()==null){
+                    // NO sounds in AND_OR
+                    if (s.getAND_OR()==null){
+                        s.setTurn(true);
+                    }
+                    //At least some of AND_OR conditions have been met
+                    else if (s.getCheck_AND_OR()){
+                        s.setTurn(true);
+                    }
+                    // NONE of the AND_OR conditions have been met
+                    else if (!s.getCheck_AND_OR()){
+                        s.setTurn(false);
+                    }
+                    else {
+                        Log.d("play_turn_preconditions", "THIS SHOULD NOT APPEAR, checking: " +s.getName());
+                    }
+                }
+        }
+    }
     //todo: check player loading! maybe save the already started players.-or- save the play position!
 }

@@ -245,7 +245,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     for (int i = 0; i < model.getSounds().length; i++) {
 
-                        if (model.getSounds()[i].getFocused()) {
+                        if (model.getSounds()[i].isFocused()) {
                             if (seekBar.getProgress() > 0) {
                                 model.getMedia_player(i).seekTo(seekBar.getProgress());
                             }
@@ -294,13 +294,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 /**
                  * Rewind the currently playing sound to start, start again
                  */
-                if (model.getPlaying() > -1) {
-                    model.getMedia_player(model.getPlaying()).seekTo(0);
-                    model.getMedia_player(model.getPlaying()).start();
+                if (model.getPlaying_with_controls() > -1) {
+                    model.getMedia_player(model.getPlaying_with_controls()).seekTo(0);
+                    model.getMedia_player(model.getPlaying_with_controls()).start();
                 } else {
                     for (int i = 0; i < model.getSounds().length; i++) {
 
-                        if (model.getSounds()[i].getFocused()) {
+                        if (model.getSounds()[i].isFocused()) {
 
                             model.getMedia_player(i).seekTo(0);
 
@@ -428,7 +428,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
          * This creates a seekerbar and starts updating it, if a view is focused...
          */
         MapsActivity.this.runOnUiThread(new Runnable() {
-
+            // todo simplify?????
             @Override
             public void run() {
                 if(model.getPlaying_with_controls() > -1){
@@ -441,7 +441,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 else {
 
                     for (int i=0;i<model.getSounds().length;i++) {
-                        if (model.getSounds()[i].getFocused()) {
+                        if (model.getSounds()[i].isFocused()) {
                             Log.d("Setting the seekerbar"," Focused: "+model.getSounds()[i].getName());
 
                             int mCurrentPosition;
@@ -503,7 +503,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     // Playing
                     model.getCircleList().get(i).setFillColor(model.getSounds()[i].getColor() + 1000);
                     Log.d("Changing circle color", "Found circle playing, changing color: " + model.getSounds()[i].getName());
-                } else if (model.getSounds()[i].getIn_distance() && !model.getSounds()[i].getPlaying()) {
+                } else if (model.getSounds()[i].isIn_distance() && !model.getSounds()[i].getPlaying()) {
                     // ir Radius, but not Playing
                     model.getCircleList().get(i).setFillColor(model.getSounds()[i].getColor() - 1000);
                     Log.d("Changing circle color", "found circle in Radius, changing color: " + model.getSounds()[i].getName());
