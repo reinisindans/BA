@@ -1,5 +1,6 @@
 package com.reinis.hafen;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -20,7 +21,7 @@ public class DatabaseTranslator {
     private SQLiteDatabase database;
 
     // Constructor
-    DatabaseTranslator(DatabaseHelper dbHelper)
+    DatabaseTranslator(DatabaseHelper dbHelper, Context app_context)
     {
 
         try {
@@ -52,6 +53,7 @@ public class DatabaseTranslator {
             int AND_OR_index=dbCursor.getColumnIndex("AND_OR");
             int NOT_index=dbCursor.getColumnIndex("NOT");
             int repeat_index = dbCursor.getColumnIndex("Repeat");
+            int delay_index = dbCursor.getColumnIndex("Delay");
             int name_index = dbCursor.getColumnIndex("Name");
             int description_index = dbCursor.getColumnIndex("Description");
             int author_index = dbCursor.getColumnIndex("Author");
@@ -72,11 +74,30 @@ public class DatabaseTranslator {
                 Log.d("Reading Cursor", "radius");
                 double radius = Double.parseDouble(dbCursor.getString(radius_index));
                 Log.d("Reading Cursor", "visibility");
-                int visibility=Integer.parseInt(dbCursor.getString(visibility_index));
+                int vis_int=Integer.parseInt(dbCursor.getString(visibility_index));
+                boolean visibility;
+                if (vis_int!=1){
+                    visibility=false;
+                    Log.d(" visibility: ", "FALSE ");
+                }
+                else {
+                    visibility=true;
+                    Log.d(" visibility: ", "TRUE ");
+                }
                 Log.d("Reading Cursor", "color");
                 int color=Color.parseColor(dbCursor.getString(color_index));
                 Log.d("Reading Cursor", "controls");
-                int control=Integer.parseInt(dbCursor.getString(control_index));
+                int cont_int=Integer.parseInt(dbCursor.getString(control_index));
+                boolean controls;
+                if (cont_int!=1){
+                    controls=false;
+                    Log.d(" controls: ", "FALSE ");
+                }
+                else {
+                    controls=true;
+                    Log.d(" controls: ", "TRUE ");
+                }
+
                 Log.d("Reading Cursor", "min_speed");
                 double min_speed=Double.parseDouble(dbCursor.getString(min_speed_index));
                 Log.d("Reading Cursor", "max_speed");
@@ -87,7 +108,6 @@ public class DatabaseTranslator {
                 String[][] approach_second_order=new String[approach_first_order.length][2];
                 for (int i = 0; i < approach_first_order.length; i++) {
                     String[] directions_array=approach_first_order[i].split(",");
-                    Log.d("Reading Cursor", "AND/OR, adding an AND array");
                     approach_second_order[i]=directions_array;
                 }
 
@@ -113,6 +133,16 @@ public class DatabaseTranslator {
                 String[] NOT=dbCursor.getString(NOT_index).split(",");
                 Log.d("Reading Cursor", "repeat");
                 int repeat = Integer.parseInt(dbCursor.getString(repeat_index));
+
+                Log.d("Reading Cursor", "delay");
+                String[] delay_str=dbCursor.getString(delay_index).split(",");
+                double[] delay=new double[delay_str.length];
+                for (int i=0; i < delay_str.length ;i++){
+                    delay[i]=Double.parseDouble(delay_str[i]);
+                }
+
+
+
                 Log.d("Reading Cursor", "name");
                 String name = dbCursor.getString(name_index);
                 Log.d("Reading Cursor", "description");
@@ -126,7 +156,7 @@ public class DatabaseTranslator {
                 Create the Sound instance!
                  */
 
-                Sound sound = new Sound( id, x_value, y_value, radius, name, author, description, repeat, file_path, color, visibility, control, min_speed, max_speed, approach_dir, AND_OR, NOT);
+                Sound sound = new Sound(app_context,id, x_value, y_value, radius, name, author, description, repeat, delay, file_path, color, visibility, controls, min_speed, max_speed, approach_dir, AND_OR, NOT);
 
                 /*
                 Add to the List af all sounds in the Database!!

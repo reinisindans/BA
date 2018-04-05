@@ -1,6 +1,7 @@
 package com.reinis.hafen;
 
 import android.location.Location;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.util.Log;
 import android.widget.TextView;
@@ -22,14 +23,14 @@ public class Model {
 
 
     private Sound[] sounds;
-    // Populating the Sounds list and creating the MediaPlayers Array!
     private MediaPlayer[] media_players;
-    private double[] distances;
-    private int playing;
-    private LatLng location;
+    private ArrayList<Circle> circleList;
+    private User user;
+    private int playing_with_controls=-1;
     private ArrayList<TextView> soundsInDistance;
-    private double speed;
     private boolean[][] checks;
+    final private double player_load_radius=200;
+    private String TAG= "model";
 
 
 
@@ -40,11 +41,11 @@ public class Model {
 
     Model(Sound[] sounds) {
         this.sounds = sounds;   //all the sounds
-        this.media_players = new MediaPlayer[sounds.length];
-        this.distances = new double[sounds.length];
-        this.playing = -1;
+
+        // create the user
+        this.user= new User(sounds.length);
         // calculate the centroid coordinates of the coverage area
-        if (this.location == null) {
+        if (user.getLocation() == null) {
             double X = 0;
             double Y = 0;
 
@@ -54,14 +55,17 @@ public class Model {
             }
             X = X / (sounds.length);
             Y = Y / (sounds.length);
-
-            this.location = new LatLng(X, Y);
+            Location new_loc= new Location(LocationManager.GPS_PROVIDER);
+            new_loc.setLatitude(X);
+            new_loc.setLongitude(Y);
+            this.user.setLocation(new_loc);
 
 
         }
 
         translateAND_OR(this.sounds);
         translateNOT(this.sounds);
+        circleList= new ArrayList<>();
     }
 
 
@@ -90,29 +94,7 @@ public class Model {
         this.media_players[index] = player;
     }
 
-    public double[] getDistances() {
-        return distances;
-    }
 
-    public void setDistances(double[] distances) {
-        this.distances = distances;
-    }
-
-    public int getPlaying() {
-        return playing;
-    }
-
-    public void setPlaying(int playing) {
-        this.playing = playing;
-    }
-
-    public LatLng getLocation() {
-        return location;
-    }
-
-    public void setLocation(LatLng location) {
-        this.location = location;
-    }
 
     public ArrayList<TextView> getSoundsInDistance() {
         return soundsInDistance;
@@ -229,35 +211,160 @@ public class Model {
       }
     }
 
-    public void setSpeed(double speed) {
+    /*public void setSpeed(double speed) {
         this.speed = speed;
     }
+    */
 
-    public void set_volume(double vol_mod_ind){
-        Log.d("Adjusting volumes", ": ");
-        for (int i=0;i<sounds.length;i++){
-            if (sounds[i].getIn_distance()){
-            double vol_mod = Math.pow(((sounds[i].getRadius() - distances[i]) / sounds[i].getRadius()), 1 / vol_mod_ind);
-            double volume=1 - (Math.log(100 - (vol_mod_ind * 100)) / Math.log(100));
-            sounds[i].setVolume(volume);}
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public ArrayList<Circle> getCircleList() {
+        return circleList;
+    }
+
+    public void setCircleList(ArrayList<Circle> circleList) {
+        this.circleList = circleList;
+    }
+
+    public int getPlaying_with_controls() {
+        return playing_with_controls;
+    }
+
+    // todo put in MODEL
+    public void set_focus() {
+        // reverting all focus settings to false
+        for (int i=0;i < sounds.length;i++) {
+            sounds[i].setFocused(false);
+        }
+
+        if (soundsInDistance!=null) {
+            // if only one sound in distance!
+            if (soundsInDistance.size() == 1) {
+                Log.d("Setting focus","Focus on only sound in radius");
+                //set the focused switch in sounds array
+                for (int i=0; i<sounds.length;i++) {
+                    if (sounds[i].getView_ID()==0) {
+                        sounds[i].setFocused(true);
+                    }
+                }
+            }
+
+
+            // if several sounds in distance
             else {
+                // check if Playing, set focus!
+                if (playing_with_controls!=-1) {
+                    Log.d("Setting focus","Searching for sound being played");
+                    Log.d("Setting focus","playing = " +playing_with_controls);
+                    int k= sounds[playing_with_controls].getView_ID();
+                    sounds[playing_with_controls].setFocused(true);
+                    Log.d("Playing sound"," "+sounds[playing_with_controls].getName());
+                }
+
+                else {
+                    // have to determine which sound is closest! all sounds!!
+                    int index=(int)get_closest_distance()[1];
+
+                    Log.d("Setting focus","Focus on closest: " +sounds[index].getName());
+
+                    sounds[index].setFocused(true);
+                }
+            }
+        }
+    }
+    // todo put in MODEL
+    private double[] get_closest_distance() {
+
+        // array= {distance,ID}
+        double[] set = new double[2];
+        set[0] = 10000;
+
+            for (int i = 0; i < sounds.length; i++) {
+                // only set focus on visible sounds
+                if (sounds[i].getUser_distance() < set[0] && sounds[i].getVisibility()) {
+                    set[0] = sounds[i].getUser_distance();
+                    set[1] = i;
+
+
+
+            }
+        }
+        return set;
+    }
+
+    private void setPlaying_with_controls(){
+        playing_with_controls=-1;
+        for (int i=0;i<sounds.length;i++){
+            if (sounds[i].getMedia_player()!=null) {
+
+                if (sounds[i].getMedia_player().isPlaying() && sounds[i].getControls()) {
+
+                    playing_with_controls=i;
+
+                    Log.d("We are playing:"," No: " +i+" --> "+sounds[i].getName());
+                    break;
+                }
             }
         }
     }
 
-    public void calculate_user_direction(){
-        Log.d("User direction", "calculate_user_direction: ");
+    public void setSoundsInDistanceView(){
 
-        for (int i=0;i<sounds.length;i++){
-            double X_sound=sounds[i].getX_value();
-            double Y_sound=sounds[i].getY_value();
-            double X_user=location.latitude;
-            double Y_user=location.longitude;
-            double user_dir=Math.atan2(Y_user-Y_sound,X_user-X_sound)*(180/Math.PI);
-            Log.d("User direction", " : "+user_dir);
-            sounds[i].setUser_direction(user_dir);
+        for (Sound s:sounds){
+            //if sound in radius and visible-> but not yet added to view ArrayList
+            if (s.isIn_distance() && s.getControls() && !s.isView_in_distance()){
+                s.setView_in_distance(true);
+                soundsInDistance.add(s.getView());
+                Log.d(TAG, " View " + s.getName() + " added");
+            }
+
+            // if not in radius but in the textView array!
+            else if(!s.isIn_distance() && s.isView_in_distance()){
+                s.setView_in_distance(false);
+                soundsInDistance.remove(s.getView());
+                Log.d(TAG, " View " + s.getName() + " removed");
+            }
         }
-
     }
 
+    public void change_text_sizes(){
+        for (int i=0;i<sounds.length;i++){
+            if (sounds[i].isFocused()){
+                soundsInDistance.get(sounds[i].getView_ID()).setTextSize(30);
+            }
+            else {
+                soundsInDistance.get(sounds[i].getView_ID()).setTextSize(12);
+            }
+        }
+    }
+
+    // check if the sound circle should be visible!!!!!!!!
+    // todo put in MODEL!
+    private boolean[] check_visibility(Sound[] sounds, boolean[] turn_precondition_values){
+        Log.d("check_visibility()", "Starting: ");
+        boolean[] visibility_check=new boolean[sounds.length];
+
+        for(int i=0;i<sounds.length;i++){
+            // NO visibility by default!
+            if (!sounds[i].getVisibility()){
+                visibility_check[i]=false;
+            }
+            // should be visible if the preconditions about previously played tracks are met
+            else {
+                visibility_check[i]= turn_precondition_values[i];
+            }
+
+        }
+
+        return visibility_check;
+    }
+
+
+    //todo: check player loading! maybe save the already started players.-or- save the play position!
 }

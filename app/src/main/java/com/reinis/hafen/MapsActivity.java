@@ -63,9 +63,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Model model;
     private DatabaseHelper dbHelper = new DatabaseHelper(this);
     private DatabaseTranslator dbTranslator;
-    private ArrayList<Circle> circleList = new ArrayList<>();
     private SQLiteDatabase database;
     private LocationManager locationManager;
+
 
 
     //views
@@ -101,10 +101,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Handling the Database
 
-        dbTranslator = new DatabaseTranslator(dbHelper);
+        dbTranslator = new DatabaseTranslator(dbHelper, this);
 
         // populate the model !!!!
         model = new Model(dbTranslator.getSoundsArray());
+
 
 
         //////////////////////  SETTING THE ACTION BAR (Menu bar) ////////////////////////
@@ -252,7 +253,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             model.getMedia_player(i).start();
                             Log.d("Play icon visible", " Starting the sound " + model.getSounds()[i].getName());
                             model.getSounds()[i].setPlaying(true);
-                            if (circleList != null) {
+                            if (model.getCircleList() != null) {
                                 change_circle_color();
                             }
                             break;
@@ -388,42 +389,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         for (int i = 0; i < model.getSounds().length; i++) {
-            //get position!
-            double x_value = model.getSounds()[i].getX_value();
-            double y_value = model.getSounds()[i].getY_value();
-            double radius = model.getSounds()[i].getRadius();
 
-
-            CircleOptions circleOptions = new CircleOptions()
-                    .center(new LatLng(x_value, y_value))
-                    .radius(radius)
-                    .fillColor(model.getSounds()[i].getColor())
-                    //.strokeColor(ContextCompat.getColor(this,R.color.circl))
-                    .strokeWidth(2)
-                    .clickable(true);
-
-            Circle circle = mMap.addCircle(circleOptions);
+            Circle circle = mMap.addCircle(model.getSounds()[i].getCircleOptions());
 
             final String circleID = circle.getId();
             model.getSounds()[i].setCircle_ID(circleID);
-            Log.d("Circle creation", "CircleID= " + circleID);
+
             Log.d("Circle creation", "SoundID= " + model.getSounds()[i].getID_sound() + "======== Sound name= " + model.getSounds()[i].getName() + "  ======================SoundCircleID= " + model.getSounds()[i].getCircle_ID());
 
             /**
-             * Adding CirckleClickListener!! See Listener defined under Methods... (although it is a Object....)
+             * Adding CircleClickListener!! See Listener defined under Methods... (although it is a Object....)
              */
-
 
             mMap.setOnCircleClickListener(circleListener);
 
-            circleList.add(circle);
+            model.getCircleList().add(circle);
 
         }
 
 
 
-        if (model.getLocation()!=null) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(model.getLocation(), 16));
+        if (model.getUser().getLocation()!=null) {
+            double lat =  model.getUser().getLocation().getLatitude();
+            double lng = model.getUser().getLocation().getLongitude();
+            LatLng coordinate = new LatLng(lat, lng);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(coordinate, 16));
 
         }
 
@@ -441,10 +431,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void run() {
-                if(model.getPlaying() > -1){
-                    int mCurrentPosition = model.getMedia_player(model.getPlaying()).getCurrentPosition();
+                if(model.getPlaying_with_controls() > -1){
+                    int mCurrentPosition = model.getMedia_player(model.getPlaying_with_controls()).getCurrentPosition();
                     seekBar.setProgress(mCurrentPosition);
-                    Log.d("Setting the seekerbar"," Playing: "+model.getSounds()[model.getPlaying()].getName());
+                    Log.d("Setting the seekerbar"," Playing: "+model.getSounds()[model.getPlaying_with_controls()].getName());
                     track_position.setText(milliSecondsToTime(mCurrentPosition));
                 }
 
@@ -504,22 +494,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // todo adjust_visibility() = check if should be displayed at all+ change_circle_color()
 
     private void change_circle_color() {
-        if (circleList != null) {
+        if (model.getCircleList() != null) {
             Log.d("Changing circle color", "");
             // setting all circle colors
             //todo change the colors dinamically- based on the base color of each circle!!
             for (int i = 0; i < model.getSounds().length; i++) {
                 if (model.getSounds()[i].getPlaying()) {
                     // Playing
-                    circleList.get(i).setFillColor(model.getSounds()[i].getColor() + 1000);
+                    model.getCircleList().get(i).setFillColor(model.getSounds()[i].getColor() + 1000);
                     Log.d("Changing circle color", "Found circle playing, changing color: " + model.getSounds()[i].getName());
                 } else if (model.getSounds()[i].getIn_distance() && !model.getSounds()[i].getPlaying()) {
                     // ir Radius, but not Playing
-                    circleList.get(i).setFillColor(model.getSounds()[i].getColor() - 1000);
+                    model.getCircleList().get(i).setFillColor(model.getSounds()[i].getColor() - 1000);
                     Log.d("Changing circle color", "found circle in Radius, changing color: " + model.getSounds()[i].getName());
                 } else {
                     // No change, use default color!!
-                    circleList.get(i).setFillColor(model.getSounds()[i].getColor());
+                    model.getCircleList().get(i).setFillColor(model.getSounds()[i].getColor());
                     Log.d("Changing circle color", "Reseting the rest of circle colors");
 
                 }
@@ -580,8 +570,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (loc != null) {
 
                 Log.d("Position changed", "******************************************************");
-                model.setLocation(new LatLng(loc.getLatitude(), loc.getLongitude()));
-                model.setSpeed(loc.getSpeed());
+                model.getUser().setLocation(loc);
+                model.getUser().setSpeed(loc.getSpeed());
+                model.getUser().setBearing(loc.getBearing());
 
 
             }
@@ -807,40 +798,5 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    //todo implement load players class
-
-    private void loadPlayers(boolean[] load){
-
-        for (int i=0; i<load.length ;i++){
-            // if should be loaded, and player IS loaded - do nothing
-            if (load[i] && (model.getMedia_player(i) != null)){
-            }
-            // if should NOT be loaded, and player is NOT loaded - do nothing
-            else if (!load[i] && (model.getMedia_player(i) == null)){
-            }
-            // if should be loaded, but player is NOT loaded!  - load player, set loaded indicator
-            else if (load[i] && (model.getMedia_player(i) == null)) {
-                Log.d("Creating Media Players", "Preparing to load "+ model.getSounds()[i].getName());
-                // run async Media player prepare!
-                String path = model.getSounds()[i].getFile_path();
-                Log.d("Creating Media Players", "path recovered: "+model.getSounds()[i].getFile_path());
-                MediaPlayer player = MediaPlayer.create(this, getResources().getIdentifier(path,
-                        "raw", getPackageName()));
-                Log.d("Creating Media Players", "Media player No. " + i + " SET");
-                model.setMedia_player(i,player);
-                model.getSounds()[i].setLoaded(true);
-            }
-            // if should NOT be loaded, but player IS loaded!  - unload player, set loaded indicator
-            else if (!load[i] && (model.getMedia_player(i)!=null )) {
-                model.getMedia_player(i).release();
-                model.setMedia_player(i,null);
-                model.getSounds()[i].setLoaded(false);
-
-                Log.d("Creating Media Players", "Media player No. " + i + " REMOVED");
-            }
-
-        }
-
-    }
 
 }
