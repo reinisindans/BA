@@ -19,20 +19,25 @@ public class DatabaseTranslator {
     private Sound[] soundsArray;
     private Cursor dbCursor;
     private SQLiteDatabase database;
-
+    String TAG="Database Translator";
     // Constructor
-    DatabaseTranslator(DatabaseHelper dbHelper, Context app_context)
+    DatabaseTranslator(DatabaseHelper dbHelper)
     {
 
         try {
+            Log.d(TAG, "DatabaseTranslator: Creating database ");
             dbHelper.createDataBase();
         } catch (IOException ioe) {
+            Log.d(TAG, "DatabaseTranslator: Creating database...........EXCEPTION ");
         }
         sounds = new ArrayList<Sound>();
         try {
-            database = dbHelper.getDataBase();
+            database = dbHelper.openDataBase();
+
             Log.d("Getting Sounds", " Database read!" + database.getPath());
-            dbCursor = database.rawQuery("SELECT * FROM sound;",
+
+
+            dbCursor = database.rawQuery("SELECT * FROM sounds;",
                     null);
 
             Log.d("Cursor Indexing", "Preparing");
@@ -40,24 +45,31 @@ public class DatabaseTranslator {
 
             Log.d("Cursor Indexing", "Indexing");
             /* search through all necessary info, determine Column indexes  */
-            int id_index = dbCursor.getColumnIndex("ID_sound");
+            int id_index = dbCursor.getColumnIndex("ID");
             int x_value_index = dbCursor.getColumnIndex("X");
+            //Log.d(TAG, "DatabaseTranslator: colums Index test: X. "+dbCursor.getColumnIndex("X"));
             int y_value_index = dbCursor.getColumnIndex("Y");
+            //Log.d(TAG, "DatabaseTranslator: colums index test: Y. "+ dbCursor.getColumnIndex("Y"));
             int radius_index = dbCursor.getColumnIndex("Radius");
             int visibility_index= dbCursor.getColumnIndex("Visibility");
             int color_index= dbCursor.getColumnIndex("Color");
             int control_index=dbCursor.getColumnIndex("Controls");
-            int min_speed_index=dbCursor.getColumnIndex("min_speed");
-            int max_speed_index=dbCursor.getColumnIndex("max_speed");
+            int min_speed_index=dbCursor.getColumnIndex("min_Speed");
+            int max_speed_index=dbCursor.getColumnIndex("max_Speed");
             int approach_dir_index=dbCursor.getColumnIndex("Approach_dir");
+            int time_index=dbCursor.getColumnIndex("Time");
             int AND_OR_index=dbCursor.getColumnIndex("AND_OR");
             int NOT_index=dbCursor.getColumnIndex("NOT");
             int repeat_index = dbCursor.getColumnIndex("Repeat");
             int delay_index = dbCursor.getColumnIndex("Delay");
+            Log.d(TAG, "DatabaseTranslator: Colums index test. Delay: "+dbCursor.getColumnIndex("Delay"));
             int name_index = dbCursor.getColumnIndex("Name");
             int description_index = dbCursor.getColumnIndex("Description");
             int author_index = dbCursor.getColumnIndex("Author");
             int file_path_index = dbCursor.getColumnIndex("File_path");
+            int volmod_index = dbCursor.getColumnIndex("VolMod");
+            int biaural_index= dbCursor.getColumnIndex("Biaural");
+            int loadRadius_index= dbCursor.getColumnIndex("LoadRadius");
 
             Log.d("Cursor Indexing", "Indexing done");
 
@@ -65,45 +77,41 @@ public class DatabaseTranslator {
 
              */
             while (!dbCursor.isAfterLast()) {
-                Log.d("Reading Cursor", "Row " + dbCursor.getCount());
-                int id = Integer.parseInt(dbCursor.getString(id_index));
-                Log.d("Reading Cursor", "x_value");
-                double x_value = Double.parseDouble(dbCursor.getString(x_value_index));
-                Log.d("Reading Cursor", "y_value");
-                double y_value = Double.parseDouble(dbCursor.getString(y_value_index));
-                Log.d("Reading Cursor", "radius");
-                double radius = Double.parseDouble(dbCursor.getString(radius_index));
-                Log.d("Reading Cursor", "visibility");
-                int vis_int=Integer.parseInt(dbCursor.getString(visibility_index));
+                //Log.d("Reading Cursor", "Row " + dbCursor.getString(name_index)+" <-------------------------------");
+                int id = dbCursor.getInt(id_index);
+                //Log.d("Reading Cursor", "x_value");
+                double x_value = dbCursor.getDouble(x_value_index);
+                //Log.d("Reading Cursor", "y_value");
+                double y_value = dbCursor.getDouble(y_value_index);
+                //Log.d("Reading Cursor", "radius");
+                double radius = dbCursor.getDouble(radius_index);
+                //Log.d("Reading Cursor", "visibility");
+                int vis_int=dbCursor.getInt(visibility_index);
                 boolean visibility;
                 if (vis_int!=1){
                     visibility=false;
-                    Log.d(" visibility: ", "FALSE ");
                 }
                 else {
                     visibility=true;
-                    Log.d(" visibility: ", "TRUE ");
                 }
-                Log.d("Reading Cursor", "color");
+                //Log.d("Reading Cursor", "color");
                 int color=Color.parseColor(dbCursor.getString(color_index));
-                Log.d("Reading Cursor", "controls");
-                int cont_int=Integer.parseInt(dbCursor.getString(control_index));
+                //Log.d("Reading Cursor", "controls");
+                int cont_int=dbCursor.getInt(control_index);
                 boolean controls;
                 if (cont_int!=1){
                     controls=false;
-                    Log.d(" controls: ", "FALSE ");
                 }
                 else {
                     controls=true;
-                    Log.d(" controls: ", "TRUE ");
                 }
 
-                Log.d("Reading Cursor", "min_speed");
-                double min_speed=Double.parseDouble(dbCursor.getString(min_speed_index));
-                Log.d("Reading Cursor", "max_speed");
-                double max_speed=Double.parseDouble(dbCursor.getString(max_speed_index));
+                //Log.d("Reading Cursor", "min_speed");
+                double min_speed=dbCursor.getDouble(min_speed_index);
+                //Log.d("Reading Cursor", "max_speed");
+                double max_speed=dbCursor.getDouble(max_speed_index);
 
-                Log.d("Reading Cursor", "approach direction");
+                //Log.d("Reading Cursor", "approach direction");
                 String[] approach_first_order=dbCursor.getString(approach_dir_index).split(";");
                 String[][] approach_second_order=new String[approach_first_order.length][2];
                 for (int i = 0; i < approach_first_order.length; i++) {
@@ -119,44 +127,81 @@ public class DatabaseTranslator {
 
                 }
 
-                Log.d("Reading Cursor", "AND/OR");
-                String[] array_or= dbCursor.getString(AND_OR_index).split(";");
-                Log.d("Reading Cursor", "AND/OR, creating arrays");
-                String [][] AND_OR = new String[array_or.length][];
-                for (int i = 0; i < array_or.length; i++) {
-                    String[] array_and=array_or[i].split(",");
-                    Log.d("Reading Cursor", "AND/OR, adding an AND array");
-                    AND_OR[i]=array_and;
+                //Log.d("Reading Cursor", "AND/OR");
+                String[][] AND_OR;
+                if (dbCursor.getString(AND_OR_index)!= null) {
+                    String[] array_or = dbCursor.getString(AND_OR_index).split(";");
+                    AND_OR = new String[array_or.length][];
+                    for (int i = 0; i < array_or.length; i++) {
+                        String[] array_and = array_or[i].split(",");
+                        AND_OR[i] = array_and;
+                    }
+                }
+                else {
+                    AND_OR =null;
                 }
 
-                Log.d("Reading Cursor", "NOT");
-                String[] NOT=dbCursor.getString(NOT_index).split(",");
-                Log.d("Reading Cursor", "repeat");
+                //Log.d("Reading Cursor", "NOT");
+                String[] NOT;
+                if (dbCursor.getString(NOT_index)!=null) {
+                    NOT = dbCursor.getString(NOT_index).split(",");
+                }
+                else {
+                    NOT=null;
+                }
+
+                //Log.d("Reading Cursor", "repeat");
                 int repeat = Integer.parseInt(dbCursor.getString(repeat_index));
 
-                Log.d("Reading Cursor", "delay");
+                //Log.d("Reading Cursor", "delay");
                 String[] delay_str=dbCursor.getString(delay_index).split(",");
+
                 double[] delay=new double[delay_str.length];
                 for (int i=0; i < delay_str.length ;i++){
                     delay[i]=Double.parseDouble(delay_str[i]);
                 }
 
+                //Log.d("Reading Cursor", "Time");
+                String[] array_timesets= dbCursor.getString(time_index).split(";");
+                //Log.d("Reading Cursor", "Times, creating arrays");
+                double [][] times = new double[array_timesets.length][2];
+                for (int i = 0; i < array_timesets.length; i++) {
+                    String[] array_times_string = array_timesets[i].split(",");
+                    double[] array_times_double = new double[array_times_string.length];
+                    for (int k=0; k<array_times_string.length; k++){
+                        array_times_double[k]=Double.parseDouble(array_times_string[k]);
+                    }
+                    times[i]=array_times_double;
+                }
 
-
-                Log.d("Reading Cursor", "name");
+                //Log.d("Reading Cursor", "name");
                 String name = dbCursor.getString(name_index);
-                Log.d("Reading Cursor", "description");
+                //Log.d("Reading Cursor", "description");
                 String description = dbCursor.getString(description_index);
-                Log.d("Reading Cursor", "author");
+                //Log.d("Reading Cursor", "author");
                 String author = dbCursor.getString(author_index);
-                Log.d("Reading Cursor", "File_path");
+                //Log.d("Reading Cursor", "File_path");
                 String file_path = dbCursor.getString(file_path_index);
+                //Log.d("Reading Cursor", "Volume modifier");
+                double volMod =dbCursor.getDouble(volmod_index);
+                //Log.d("Reading Cursor", "Biaural");
+                int biaural_int=dbCursor.getInt(biaural_index);
+                boolean biaural;
+                       if  (biaural_int==1){
+                           biaural=true;
+                       }
+                       else {
+                           biaural=false;
+                       }
+
+                double loadRadius=dbCursor.getDouble(loadRadius_index);
+
 
                 /*
                 Create the Sound instance!
                  */
 
-                Sound sound = new Sound(app_context,id, x_value, y_value, radius, name, author, description, repeat, delay, file_path, color, visibility, controls, min_speed, max_speed, approach_dir, AND_OR, NOT);
+                Sound sound = new Sound(dbHelper.getMyContext(),id, x_value, y_value, radius, name, author, description, repeat, delay, file_path, color, visibility, controls, min_speed, max_speed, approach_dir, times, AND_OR, NOT, volMod, biaural,loadRadius);
 
                 /*
                 Add to the List af all sounds in the Database!!
@@ -165,7 +210,9 @@ public class DatabaseTranslator {
                 dbCursor.moveToNext();
 
             }
-        } finally {
+        }
+
+        finally {
             if (database != null) {
                 dbHelper.close();
                 dbCursor.close();
@@ -183,11 +230,10 @@ public class DatabaseTranslator {
 
     public Sound[] getSoundsArray(){
         soundsArray=new Sound[sounds.size()];
-        for (int i=0;i>this.sounds.size();i++){
+        //Log.d(TAG, "getSoundsArray: length:"+soundsArray.length);
+        for (int i=0;i<this.sounds.size();i++){
             soundsArray[i]=sounds.get(i);
         }
-
-
         return soundsArray;
     }
 }

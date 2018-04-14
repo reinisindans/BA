@@ -7,4 +7,5 @@
     <string name="author">Erzähler: %1$s </string>
     <string name="list">Audio Liste</string>
     <string name="action_settings">Einstellungen</string>
+    <string name="reset">Reset progress</string>
 </resources>
